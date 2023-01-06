@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "esModuleInterop": true,
+    "target": "es6",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "alwaysStrict": true
+  },
+  "include": [
+    "./src",
+    "./tests"
+  ],
+  "ts-node": {
+    "esm": true
+  }
+}
