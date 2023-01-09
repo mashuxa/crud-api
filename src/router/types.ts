@@ -1,11 +1,7 @@
-interface IUser {
-  id?: string;
-  username: string;
-  age: number;
-  hobbies: string[];
-}
+import { ServerResponse } from "http";
+import { IUser } from "../userService/types";
 
-type RouteCallback = (body: IUser, ids: Record<string, string>) => void;
+export type RouteCallback = (response: ServerResponse, userId: string, body: IUser) => void;
 
 export type Route = Record<string, RouteCallback>;
 

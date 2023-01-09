@@ -1,23 +1,25 @@
+import { RequestListener } from "http";
+import { validate as uuidValidate } from 'uuid';
 import { getEndpointIds, isMatchEndpoint } from "../utils/routerUtils/routerUtils";
 import { Route, Routes, MethodType } from "./types";
-import { RequestListener } from "http";
+import { getUsers, getUserById, postUser, putUserById, deleteUserById } from "../userService/userService";
+import { messages } from "../constants";
 
-const UUID_REGEXP = /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/gm;
-const ENDPOINT = '/api/users';
-const ENDPOINT_WITH_ID = `${ENDPOINT}/:userId`;
+export const ENDPOINT = '/api/users';
+export const ENDPOINT_WITH_ID = `${ENDPOINT}/:userId`;
 const routes: Routes = {
   get: {
-    [ENDPOINT]: console.log,
-    [ENDPOINT_WITH_ID]: console.log,
+    [ENDPOINT]: getUsers,
+    [ENDPOINT_WITH_ID]: getUserById,
   },
   post: {
-    [ENDPOINT]: console.log,
+    [ENDPOINT]: postUser,
   },
   put: {
-    [ENDPOINT_WITH_ID]: console.log,
+    [ENDPOINT_WITH_ID]: putUserById,
   },
   delete: {
-    [ENDPOINT_WITH_ID]: console.log,
+    [ENDPOINT_WITH_ID]: deleteUserById,
   },
 };
 
@@ -29,12 +31,12 @@ export const requestListener: RequestListener = async (request, response) => {
 
     if (rout && callback && request.url) {
       try {
-        const ids = getEndpointIds(rout, request.url);
+        const { userId } = getEndpointIds(rout, request.url);
         const buffers = [];
 
-        if (!UUID_REGEXP.test(ids.userId)) {
+        if (userId && !uuidValidate(userId)) {
           response.statusCode = 400;
-          response.end('Incorrect uuid');
+          response.end(messages.incorrectUuid);
 
           return;
         }
@@ -45,16 +47,13 @@ export const requestListener: RequestListener = async (request, response) => {
 
         const data = JSON.parse(Buffer.concat(buffers).toString());
 
-        callback(data, ids);
-        response.statusCode = 200;
-        response.end('Success');
-``
+        callback(response, userId, data);
       } catch (e) {
         response.statusCode = 500;
-        response.end('Server error');
+        response.end(messages.serverError);
       }
     } else {
       response.statusCode = 404;
-      response.end('Incorrect endpoint');
+      response.end(messages.incorrectEndpoint);
     }
 };
