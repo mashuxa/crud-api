@@ -1,6 +1,6 @@
 import { RequestListener } from "http";
 import { validate as uuidValidate } from 'uuid';
-import { getEndpointIds, isMatchEndpoint } from "../utils/routerUtils/routerUtils";
+import { getRequestBody, getEndpointIds, isMatchEndpoint } from "../utils/routerUtils/routerUtils";
 import { Route, Routes, MethodType } from "./types";
 import { getUsers, getUserById, postUser, putUserById, deleteUserById } from "../userService/userService";
 import { messages } from "../constants";
@@ -32,7 +32,6 @@ export const requestListener: RequestListener = async (request, response) => {
     if (rout && callback && request.url) {
       try {
         const { userId } = getEndpointIds(rout, request.url);
-        const buffers = [];
 
         if (userId && !uuidValidate(userId)) {
           response.statusCode = 400;
@@ -41,11 +40,7 @@ export const requestListener: RequestListener = async (request, response) => {
           return;
         }
 
-        for await (const chunk of request) {
-          buffers.push(chunk);
-        }
-
-        const data = JSON.parse(Buffer.concat(buffers).toString());
+        const data = await getRequestBody(request);
 
         callback(response, userId, data);
       } catch (e) {

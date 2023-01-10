@@ -4,10 +4,10 @@ import { requestListener } from "./router/router";
 
 config();
 
-const hostname = process.env.HOST;
+const host = process.env.HOST;
 const port = Number(process.env.PORT);
 const server = createServer(requestListener);
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
+server.listen(port, host, () => {
+  console.log(`Server running at http://${host}:${port}/`);
 });

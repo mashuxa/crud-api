@@ -2,9 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { IUser } from "./types";
 import { ServerResponse } from "http";
 import { messages } from "../constants";
+import { db } from "./db";
 
 const requiredFields = ['username', 'age', 'hobbies'];
-const db: Map<string, IUser> = new Map();
 
 const answerWithData = (response: ServerResponse, statusCode: number, data: IUser | IUser[] | string): void => {
   response.statusCode = statusCode;
