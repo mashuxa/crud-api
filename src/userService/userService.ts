@@ -2,13 +2,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { IUser } from "./types";
 import { ServerResponse } from "http";
 import { messages } from "../constants";
-import { db } from "./db";
 
 const requiredFields = ['username', 'age', 'hobbies'];
+let db: Map<string, IUser> = new Map();
+
+process.on('message', (data: Map<string, IUser>) => {
+  db = new Map(Object.entries(data));
+});
 
 const answerWithData = (response: ServerResponse, statusCode: number, data: IUser | IUser[] | string): void => {
   response.statusCode = statusCode;
   response.end(JSON.stringify(data));
+  process.send && process.send(Object.fromEntries(db.entries()));
 }
 
 const answerWithNotFound = (response: ServerResponse, userId: string): void => {
@@ -66,6 +71,5 @@ export const deleteUserById = (response: ServerResponse, userId: string): void =
   } else {
     answerWithNotFound(response, userId);
   }
-
 };
 

@@ -1,21 +1,26 @@
 import { config } from "dotenv";
 import { createServer, request as httpRequest } from "http";
-import cluster from "cluster";
+import cluster, { Worker } from "cluster";
 import { cpus } from "os";
-import { IUser } from "./userService/types";
 
 config();
 
 const host = process.env.HOST;
 const port = Number(process.env.PORT);
 const numCpus = cpus().length;
-export const db: Map<string, IUser> = new Map();
 
 if (cluster.isPrimary) {
   cluster.setupPrimary({ exec: './src/server.ts' });
 
+  const workers: Worker[] = [];
+
   for (let i = 1; i <= numCpus; i++) {
-    cluster.fork({ HOST: host, PORT: port + i });
+    const childWorker = cluster.fork({ HOST: host, PORT: port + i });
+
+    workers.push(childWorker);
+    childWorker.on('message', (data) => {
+      workers.forEach((worker) => worker.send(data));
+    });
   }
 
   cluster.on('exit', (worker, code) => {
