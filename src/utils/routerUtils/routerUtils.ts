@@ -1,8 +1,10 @@
 import { IncomingMessage } from "http";
-import { IUser } from "../../userService/types";
+import { IUser } from "../../usersApi/types";
 
 const ANY_PATH_SYMBOL = '[^/]+';
 const URL_PARAM_REGEXP = new RegExp(`:${ANY_PATH_SYMBOL}`, 'gm');
+
+export const removeLastSlash = (url = ''): string => url.endsWith('/') ? url.slice(0, -1) : url;
 
 export const isMatchEndpoint = (endpoint: string, url: string): boolean => {
   const endpointRegExpString = endpoint.replace(URL_PARAM_REGEXP, ANY_PATH_SYMBOL);

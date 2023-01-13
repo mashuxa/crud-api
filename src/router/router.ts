@@ -1,37 +1,38 @@
 import { RequestListener } from "http";
 import { validate as uuidValidate } from 'uuid';
-import { getRequestBody, getEndpointIds, isMatchEndpoint } from "../utils/routerUtils/routerUtils";
+import { getRequestBody, getEndpointIds, isMatchEndpoint, removeLastSlash } from "../utils/routerUtils/routerUtils";
 import { Route, Routes, MethodType } from "./types";
-import { getUsers, getUserById, postUser, putUserById, deleteUserById } from "../userService/userService";
+import usersApi from "../usersApi/usersApi";
 import { messages } from "../constants";
 
 export const ENDPOINT = '/api/users';
 export const ENDPOINT_WITH_ID = `${ENDPOINT}/:userId`;
 const routes: Routes = {
   get: {
-    [ENDPOINT]: getUsers,
-    [ENDPOINT_WITH_ID]: getUserById,
+    [ENDPOINT]: usersApi.getUsers,
+    [ENDPOINT_WITH_ID]: usersApi.getUserById,
   },
   post: {
-    [ENDPOINT]: postUser,
+    [ENDPOINT]: usersApi.postUser,
   },
   put: {
-    [ENDPOINT_WITH_ID]: putUserById,
+    [ENDPOINT_WITH_ID]: usersApi.putUserById,
   },
   delete: {
-    [ENDPOINT_WITH_ID]: deleteUserById,
+    [ENDPOINT_WITH_ID]: usersApi.deleteUserById,
   },
 };
 
 export const requestListener: RequestListener = async (request, response) => {
     const endpoints: Route = routes[request.method?.toLowerCase() as MethodType] || {};
-    const [rout, callback] = Object.entries(endpoints).find(([endpoint]) => request.url && isMatchEndpoint(endpoint, request.url)) || [];
+    const url = removeLastSlash(request.url);
+    const [rout, callback] = Object.entries(endpoints).find(([endpoint]) => url && isMatchEndpoint(endpoint, url)) || [];
 
     response.setHeader('Content-Type', 'application/json');
 
-    if (rout && callback && request.url) {
+    if (rout && callback) {
       try {
-        const { userId } = getEndpointIds(rout, request.url);
+        const { userId } = getEndpointIds(rout, url);
 
         if (userId && !uuidValidate(userId)) {
           response.statusCode = 400;
@@ -40,9 +41,11 @@ export const requestListener: RequestListener = async (request, response) => {
           return;
         }
 
-        const data = await getRequestBody(request);
+        const requestBody = await getRequestBody(request);
+        const { status, data } = callback(userId, requestBody);
 
-        callback(response, userId, data);
+        response.statusCode = status;
+        response.end(JSON.stringify(data));
       } catch (e) {
         response.statusCode = 500;
         response.end(messages.serverError);

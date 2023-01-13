@@ -30,7 +30,6 @@
     "@typescript-eslint/parser": "^5.48.0",
     "@webpack-cli/generators": "^3.0.1",
     "babel-loader": "^9.1.2",
-    "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "eslint": "^8.31.0",

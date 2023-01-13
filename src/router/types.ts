@@ -1,7 +1,7 @@
-import { ServerResponse } from "http";
-import { IUser } from "../userService/types";
+import { IUser } from "../usersApi/types";
+import UsersApiResponse from "../UsersApiResponse/UsersApiResponse";
 
-export type RouteCallback = (response: ServerResponse, userId: string, body: IUser) => void;
+export type RouteCallback = (userId: string, body: IUser) => UsersApiResponse;
 
 export type Route = Record<string, RouteCallback>;
 
