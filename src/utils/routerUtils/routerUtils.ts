@@ -21,12 +21,16 @@ export const getEndpointIds = (endpoint: string, url: string): Record<string, st
     { ...acc, [value.substring(1)]: urlArray[index]} : acc, {});
 };
 
-export const getRequestBody = async (request: IncomingMessage): Promise<IUser> => {
+export const getRequestBody = async (request: IncomingMessage): Promise<IUser | undefined> => {
   const buffers = [];
 
   for await (const chunk of request) {
     buffers.push(chunk);
   }
 
-  return JSON.parse(Buffer.concat(buffers).toString());
+  const data = Buffer.concat(buffers).toString();
+
+  if (data) {
+    return JSON.parse(data);
+  }
 };

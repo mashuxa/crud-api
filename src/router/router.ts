@@ -24,34 +24,31 @@ const routes: Routes = {
 };
 
 export const requestListener: RequestListener = async (request, response) => {
-    const endpoints: Route = routes[request.method?.toLowerCase() as MethodType] || {};
-    const url = removeLastSlash(request.url);
-    const [rout, callback] = Object.entries(endpoints).find(([endpoint]) => url && isMatchEndpoint(endpoint, url)) || [];
+  const endpoints: Route = routes[request.method?.toLowerCase() as MethodType] || {};
+  const url = removeLastSlash(request.url);
+  const [rout, callback] = Object.entries(endpoints).find(([endpoint]) => url && isMatchEndpoint(endpoint, url)) || [];
 
-    response.setHeader('Content-Type', 'application/json');
+  response.setHeader('Content-Type', 'application/json');
 
-    if (rout && callback) {
-      try {
-        const { userId } = getEndpointIds(rout, url);
+  if (rout && callback) {
+    try {
+      const { userId } = getEndpointIds(rout, url);
 
-        if (userId && !uuidValidate(userId)) {
-          response.statusCode = 400;
-          response.end(messages.incorrectUuid);
-
-          return;
-        }
-
+      if (userId && !uuidValidate(userId)) {
+        response.statusCode = 400;
+        response.end(JSON.stringify(messages.incorrectUuid));
+      } else {
         const requestBody = await getRequestBody(request);
         const { status, data } = callback(userId, requestBody);
-
         response.statusCode = status;
         response.end(JSON.stringify(data));
-      } catch (e) {
-        response.statusCode = 500;
-        response.end(messages.serverError);
       }
-    } else {
-      response.statusCode = 404;
-      response.end(messages.incorrectEndpoint);
+    } catch (e) {
+      response.statusCode = 500;
+      response.end(JSON.stringify(messages.serverError));
     }
+  } else {
+    response.statusCode = 404;
+    response.end(JSON.stringify(messages.incorrectEndpoint));
+  }
 };

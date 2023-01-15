@@ -11,6 +11,8 @@ process.on('message', (data: Map<string, IUser>) => {
   db = new Map(Object.entries(data));
 });
 
+const requiredFieldsResponse =  new UsersApiResponse(400, messages.requiredFields);
+
 const updateDB = (): void => {
   process.send && process.send(Object.fromEntries(db.entries()));
 };
@@ -24,7 +26,11 @@ class UsersApi {
     return user ? new UsersApiResponse(200, user) : new UsersApiResponse(404, getNotFoundMessage(userId));
   };
 
-  postUser = (userId: string, userData: IUser): UsersApiResponse => {
+  postUser = (userId: string, userData: IUser | undefined): UsersApiResponse => {
+    if (!userData) {
+      return requiredFieldsResponse;
+    }
+
     const isValidUserData = requiredFields.every((field) => field in userData);
 
     if (isValidUserData) {
@@ -36,12 +42,16 @@ class UsersApi {
 
       return new UsersApiResponse(201, user);
     } else {
-      return new UsersApiResponse(400, messages.requiredFields);
+      return requiredFieldsResponse;
     }
   };
 
-  putUserById = (userId: string, userData: IUser): UsersApiResponse => {
+  putUserById = (userId: string, userData: IUser | undefined): UsersApiResponse => {
     const user = db.get(userId);
+
+    if (!userData) {
+      return new UsersApiResponse(400, messages.requiredFields);
+    }
 
     if (user) {
       const updatedUserData = { ...user, ...userData };
@@ -51,7 +61,7 @@ class UsersApi {
 
       return new UsersApiResponse(200, updatedUserData);
     } else {
-      return new UsersApiResponse(200, getNotFoundMessage(userId));
+      return new UsersApiResponse(404, getNotFoundMessage(userId));
     }
   };
 
@@ -62,7 +72,7 @@ class UsersApi {
       db.delete(userId);
       updateDB();
 
-      return new UsersApiResponse(204, user);
+      return new UsersApiResponse(204);
     } else {
       return new UsersApiResponse(404, getNotFoundMessage(userId));
     }
