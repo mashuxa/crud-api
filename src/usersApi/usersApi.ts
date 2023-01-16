@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { IUser } from "./types";
 import { messages } from "../constants";
 import UsersApiResponse from "../UsersApiResponse/UsersApiResponse";
-import { getNotFoundMessage } from "../utils/userApiUtils/userApiUtils";
+import { getNotFoundMessage, validateBody } from "../utils/userApiUtils/userApiUtils";
 
 const requiredFields = ['username', 'age', 'hobbies'];
 let db: Map<string, IUser> = new Map();
@@ -11,7 +11,7 @@ process.on('message', (data: Map<string, IUser>) => {
   db = new Map(Object.entries(data));
 });
 
-const requiredFieldsResponse =  new UsersApiResponse(400, messages.requiredFields);
+const requiredFieldsResponse = new UsersApiResponse(400, messages.requiredFields);
 
 const updateDB = (): void => {
   process.send && process.send(Object.fromEntries(db.entries()));
@@ -33,17 +33,21 @@ class UsersApi {
 
     const isValidUserData = requiredFields.every((field) => field in userData);
 
-    if (isValidUserData) {
-      const id = uuidv4();
-      const user = { id, ...userData };
-
-      db.set(id, user);
-      updateDB();
-
-      return new UsersApiResponse(201, user);
-    } else {
+    if (!isValidUserData) {
       return requiredFieldsResponse;
     }
+
+    if (!validateBody(userData)) {
+      return new UsersApiResponse(400, messages.invalidFields);
+    }
+
+    const id = uuidv4();
+    const user = { id, ...userData };
+
+    db.set(id, user);
+    updateDB();
+
+    return new UsersApiResponse(201, user);
   };
 
   putUserById = (userId: string, userData: IUser | undefined): UsersApiResponse => {
